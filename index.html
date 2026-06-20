@@ -138,43 +138,7 @@
             </div>
 
             <!-- GAUGES AND KPI OVERVIEW -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                <!-- KPI 1: Compliance Gauge -->
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
-                    <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-4">อัตราปฏิบัติถูกต้อง (Compliance)</h3>
-                    <div class="relative flex items-center justify-center">
-                        <svg class="w-32 h-32 transform -rotate-90">
-                            <circle cx="64" cy="64" r="52" class="stroke-slate-100 fill-none" stroke-width="10" />
-                            <circle id="gauge-circle" cx="64" cy="64" r="52" class="stroke-emerald-500 fill-none transition-all duration-1000 ease-out" stroke-width="10" stroke-dasharray="326.7" stroke-dashoffset="326.7" />
-                        </svg>
-                        <div class="absolute text-center">
-                            <span id="dash-compliance-text" class="text-2xl font-extrabold text-slate-800">0%</span>
-                            <span class="block text-[9px] font-bold text-slate-400 uppercase">Overall Rate</span>
-                        </div>
-                    </div>
-                    <p class="mt-3 text-[10px] text-slate-400 leading-tight">คำนวณจากข้อปฏิบัติที่เข้าข่ายจริง (ไม่นับรวม N/A)</p>
-                </div>
-
-                <!-- KPI 2: KPI PASS / FAIL -->
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">เป้าหมายตัวชี้วัดองค์กร (KPI)</h3>
-                        <div class="mt-2 flex items-center gap-2">
-                            <span id="dash-kpi-badge" class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-extrabold rounded-lg border border-amber-200">เกณฑ์เป้าหมาย ≥ 80%</span>
-                        </div>
-                    </div>
-                    <div class="space-y-2 mt-4 pt-4 border-t border-slate-100 text-xs">
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500 flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span>ผ่านเกณฑ์ (≥80%):</span>
-                            <span id="dash-passed-count" class="font-bold text-emerald-600 font-mono">0 รายการ</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500 flex items-center gap-1"><span class="w-2 h-2 bg-rose-500 rounded-full"></span>ไม่ผ่านเกณฑ์ (&lt;80%):</span>
-                            <span id="dash-failed-count" class="font-bold text-rose-500 font-mono">0 รายการ</span>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- KPI 3: Audits Count -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
@@ -731,11 +695,11 @@
             document.getElementById('dash-summary-count').innerText = `วิเคราะห์ผลตามตัวกรองสำเร็จ: ทั้งหมด ${totalCount} รายการ`;
             
             if (totalCount === 0) {
-                updateGauge(0);
-                document.getElementById('dash-compliance-text').innerText = "0%";
+                if (document.getElementById('gauge-circle')) updateGauge(0);
+                if (document.getElementById('dash-compliance-text')) document.getElementById('dash-compliance-text').innerText = "0%";
                 document.getElementById('dash-total-audits').innerText = "0";
-                document.getElementById('dash-passed-count').innerText = "0 รายการ";
-                document.getElementById('dash-failed-count').innerText = "0 รายการ";
+                if (document.getElementById('dash-passed-count')) document.getElementById('dash-passed-count').innerText = "0 รายการ";
+                if (document.getElementById('dash-failed-count')) document.getElementById('dash-failed-count').innerText = "0 รายการ";
                 document.getElementById('dash-perfect-count').innerText = "0 ครั้ง";
                 document.getElementById('dash-poor-count').innerText = "0 ครั้ง";
                 document.getElementById('trend-bars-container').innerHTML = '<div class="text-[10px] text-slate-400 w-full text-center pb-4">ไม่มีข้อมูล</div>';
@@ -777,11 +741,11 @@
 
             const overallCompliance = grandApplicable > 0 ? Math.round((grandComplied / grandApplicable) * 100) : 0;
             
-            updateGauge(overallCompliance);
-            document.getElementById('dash-compliance-text').innerText = `${overallCompliance}%`;
+            if (document.getElementById('gauge-circle')) updateGauge(overallCompliance);
+            if (document.getElementById('dash-compliance-text')) document.getElementById('dash-compliance-text').innerText = `${overallCompliance}%`;
             document.getElementById('dash-total-audits').innerText = totalCount;
-            document.getElementById('dash-passed-count').innerText = `${passedCount} รายการ`;
-            document.getElementById('dash-failed-count').innerText = `${failedCount} รายการ`;
+            if (document.getElementById('dash-passed-count')) document.getElementById('dash-passed-count').innerText = `${passedCount} รายการ`;
+            if (document.getElementById('dash-failed-count')) document.getElementById('dash-failed-count').innerText = `${failedCount} รายการ`;
             document.getElementById('dash-perfect-count').innerText = `${perfectCount} ครั้ง`;
             document.getElementById('dash-poor-count').innerText = `${poorCount} ครั้ง`;
 
@@ -795,6 +759,7 @@
 
         function updateGauge(percent) {
             const circle = document.getElementById('gauge-circle');
+            if (!circle) return;
             const circumference = 326.7; 
             const offset = circumference - (circumference * percent) / 100;
             circle.style.strokeDashoffset = offset;
