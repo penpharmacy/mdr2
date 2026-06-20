@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDR Checklist & Dashboard - โรงพยาบาลพุนพิน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', 'Inter', sans-serif;
+        }
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col antialiased">
+
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <header class="bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/15 p-2.5 rounded-xl border border-white/10 backdrop-blur-sm">
+                        <i data-lucide="clipboard-list" class="w-8 h-8 text-emerald-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold tracking-tight">แบบประเมินการปฏิบัติในการดูแลผู้ป่วยเชื้อดื้อยา (MDR Checklist)</h1>
+                        <p class="text-emerald-100 text-xs md:text-sm font-medium mt-0.5">
+                            เวอร์ชันประเมินด่วน (ไม่ระบุตัวตนผู้ป่วย) • โรงพยาบาลพุนพิน (ปรับปรุงล่าสุด 2026)
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openNewAuditForm()" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-md transition-all transform active:scale-95">
+                        <i data-lucide="plus" class="w-4 h-4"></i> เริ่มประเมินด่วน
+                    </button>
+                    <button onclick="handleExportCSV()" class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white border border-white/15 text-sm font-semibold rounded-xl transition-all">
+                        <i data-lucide="download" class="w-4 h-4 text-emerald-300"></i> ส่งออก CSV (ตามตัวกรอง)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t border-white/10 bg-black/10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex space-x-1 py-2 overflow-x-auto scrollbar-none" aria-label="Tabs">
+                    <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="tab-btn flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all bg-white text-emerald-900 shadow-sm">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i> แดชบอร์ดวิเคราะห์ผล
+                    </button>
+                    <button onclick="switchTab('form')" id="btn-tab-form" class="tab-btn flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all text-emerald-100 hover:bg-white/10 hover:text-white">
+                        <i data-lucide="clipboard-list" class="w-4 h-4"></i> <span id="form-tab-text">บันทึกประเมินใหม่</span>
+                    </button>
+                    <button onclick="switchTab('list')" id="btn-tab-list" class="tab-btn flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all text-emerald-100 hover:bg-white/10 hover:text-white">
+                        <i data-lucide="database" class="w-4 h-4"></i> ประวัติการประเมิน (<span id="count-badge">0</span>)
+                    </button>
+                    <button onclick="switchTab('sync')" id="btn-tab-sync" class="tab-btn flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all text-emerald-100 hover:bg-white/10 hover:text-white">
+                        <i data-lucide="settings" class="w-4 h-4"></i> ตั้งค่า Google Sheets
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="filter" class="w-5 h-5 text-teal-600"></i>
+                        <h2 class="text-sm font-bold text-slate-700">ตัวกรองเรียกดูรายงานและข้อมูลสถิติ</h2>
+                    </div>
+                    <span class="text-xs text-slate-400 font-medium" id="dash-summary-count">
+                        วิเคราะห์ผลจากทั้งหมด 0 รายการ
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">รูปแบบการกรอง</label>
+                        <select id="filter-type" onchange="toggleFilterInputs()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500">
+                            <option value="all">แสดงข้อมูลทั้งหมด</option>
+                            <option value="year">เลือกรายปี</option>
+                            <option value="range">เลือกช่วงวันที่กำหนดเอง</option>
+                        </select>
+                    </div>
+                    
+                    <div id="filter-year-container" class="hidden">
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">ปี พ.ศ. (ค.ศ.)</label>
+                        <select id="filter-year" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500">
+                            <option value="2026">2569 (2026)</option>
+                            <option value="2025">2568 (2025)</option>
+                            <option value="2024">2567 (2024)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="filter-start-container" class="hidden">
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">ตั้งแต่วันที่</label>
+                        <input type="date" id="filter-start-date" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    
+                    <div id="filter-end-container" class="hidden">
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">ถึงวันที่</label>
+                        <input type="date" id="filter-end-date" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-emerald-500">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="resetFilters()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> รีเซ็ตตัวกรอง
+                        </button>
+                        <button onclick="clearAllData()" class="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1" title="ล้างข้อมูลทั้งหมด">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> ล้างข้อมูลเครื่อง
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
+                    <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-4">อัตราปฏิบัติถูกต้อง (Compliance)</h3>
+                    <div class="relative flex items-center justify-center">
+                        <svg class="w-32 h-32 transform -rotate-90">
+                            <circle cx="64" cy="64" r="52" class="stroke-slate-100 fill-none" stroke-width="10" />
+                            <circle id="gauge-circle" cx="64" cy="64" r="52" class="stroke-emerald-500 fill-none transition-all duration-1000 ease-out" stroke-width="10" stroke-dasharray="326.7" stroke-dashoffset="326.7" />
+                        </svg>
+                        <div class="absolute text-center">
+                            <span id="dash-compliance-text" class="text-2xl font-extrabold text-slate-800">0%</span>
+                            <span class="block text-[9px] font-bold text-slate-400 uppercase">Overall Rate</span>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-[10px] text-slate-400 leading-tight">คำนวณจากข้อปฏิบัติที่เข้าข่ายจริง (ไม่นับรวม N/A)</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">เป้าหมายตัวชี้วัดองค์กร (KPI)</h3>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span id="dash-kpi-badge" class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-extrabold rounded-lg border border-amber-200">เกณฑ์เป้าหมาย ≥ 80%</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mt-4 pt-4 border-t border-slate-100 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span>ผ่านเกณฑ์ (≥80%):</span>
+                            <span id="dash-passed-count" class="font-bold text-emerald-600 font-mono">0 รายการ</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 flex items-center gap-1"><span class="w-2 h-2 bg-rose-500 rounded-full"></span>ไม่ผ่านเกณฑ์ (&lt;80%):</span>
+                            <span id="dash-failed-count" class="font-bold text-rose-500 font-mono">0 รายการ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">จำนวนรอบตรวจประเมิน</h3>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <span id="dash-total-audits" class="text-4xl font-black text-slate-800">0</span>
+                            <span class="text-slate-400 font-bold text-xs">รอบตรวจ</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mt-4 pt-4 border-t border-slate-100 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">ความร่วมมือ 100% เต็ม:</span>
+                            <span id="dash-perfect-count" class="font-bold text-teal-600 font-mono">0 ครั้ง</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">ความร่วมมือต่ำกว่า 50%:</span>
+                            <span id="dash-poor-count" class="font-bold text-red-500 font-mono">0 ครั้ง</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">แนวโน้มผลความสมบูรณ์ (Trend)</h3>
+                        <p class="text-[11px] text-slate-400 mb-2">แสดงทิศทางการปฏิบัติตามไทม์ไลน์</p>
+                        
+                        <div class="flex items-end gap-1 h-14 pt-2" id="trend-bars-container">
+                            </div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 text-right pt-2 border-t border-slate-50">เรียงจากอดีต → ล่าสุด</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 lg:col-span-1 flex flex-col justify-between">
+                    <div>
+                        <div class="border-b border-slate-100 pb-3 mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i>
+                                Top 5 ข้อปฏิบัติที่เป็นปัญหามากที่สุด
+                            </h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">เรียงตามลำดับข้อที่ทีมงาน "ไม่ปฏิบัติ" บ่อยที่สุด</p>
+                        </div>
+                        <div id="top-failed-container" class="space-y-3">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800">ตารางสรุปผลและเปอร์เซ็นต์ปฏิบัติรายข้อ (1-16 ข้อ)</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">สัดส่วนคำนวณเปรียบเทียบในรูปแบบ แผนภูมิแถบสถานะ</p>
+                        </div>
+                        <div class="flex items-center gap-3 text-[10px] font-bold">
+                            <span class="flex items-center gap-1 text-slate-500"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span>ปฏิบัติ</span>
+                            <span class="flex items-center gap-1 text-slate-500"><span class="w-2 h-2 bg-rose-400 rounded-full"></span>ไม่ปฏิบัติ</span>
+                        </div>
+                    </div>
+
+                    <div id="items-statistics-container" class="space-y-3.5 max-h-[380px] overflow-y-auto pr-1 scrollbar-none">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-form" class="tab-content hidden max-w-4xl mx-auto">
+            <form id="audit-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <div class="flex items-center gap-3 border-b border-slate-100 pb-3 mb-4">
+                        <i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i>
+                        <h3 id="form-title" class="text-lg font-bold text-slate-800">วันเวลาที่ตรวจประเมิน</h3>
+                    </div>
+                    <div class="max-w-xs space-y-1.5">
+                        <label class="text-xs font-bold text-slate-500 uppercase">วันที่ทำการตรวจประเมิน</label>
+                        <input type="date" id="input-eval-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-6">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="clipboard-list" class="w-5 h-5 text-emerald-600"></i>
+                            <h3 class="text-lg font-bold text-slate-800">รายการตรวจสอบปฏิบัติการดูแลผู้ป่วย</h3>
+                        </div>
+                        <span class="text-xs font-bold text-slate-400">ระบุสถานะรายข้อ</span>
+                    </div>
+
+                    <div id="form-questions-container" class="space-y-4">
+                        </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-3">
+                    <label class="text-sm font-bold text-slate-700 block">บันทึกเพิ่มเติม / ข้อสังเกตเพิ่มเติมภาพรวม</label>
+                    <textarea id="input-general-notes" rows="3" placeholder="เช่น ตรวจพบสิ่งแวดล้อมไม่สะอาดบางจุด, ความร่วมมือของญาติอยู่ในเกณฑ์ดี..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3">
+                    <button type="button" onclick="cancelForm()" class="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 rounded-xl text-sm font-bold text-slate-600 transition-all">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" id="submit-btn" class="inline-flex items-center gap-2 px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md transition-all">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> บันทึกข้อมูล
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section id="tab-list" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex-1 max-w-md relative">
+                    <i data-lucide="search" class="absolute left-3.5 top-3 w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="ค้นหาตามวันที่ (เช่น 2026-06) หรือข้อความหมายเหตุ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500 bg-white" />
+                </div>
+            </div>
+
+            <div id="logs-container" class="space-y-4">
+                </div>
+        </section>
+
+        <section id="tab-sync" class="tab-content hidden max-w-4xl mx-auto space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                    <i data-lucide="file-spreadsheet" class="w-6 h-6 text-emerald-600"></i>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">การเชื่อมต่อชุดข้อมูลเข้า Google Sheets (MDRO_AUDIT)</h3>
+                        <p class="text-xs text-slate-400">สำหรับจัดเก็บ ตรวจสอบย้อนหลัง และสรุปแผนกต่าง ๆ ในองค์กร</p>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
+                    <h4 class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                        <i data-lucide="settings" class="w-4 h-4 text-emerald-600"></i> 1. ตั้งค่า Webhook URL
+                    </h4>
+                    <div class="space-y-3">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Google Apps Script Web App URL</label>
+                            <input type="url" id="webhook-url-input" oninput="saveWebhookSettings()" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                            <p class="text-[11px] text-slate-400">หากท่านนำสคริปต์ไปติดตั้งใน Google Sheets ให้นำ URL ที่คัดลอกมาวางในช่องนี้</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="auto-sync-checkbox" onchange="saveWebhookSettings()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                                <span class="ml-3 text-xs font-bold text-slate-600">ซิงค์บันทึกขึ้น Google Sheet อัตโนมัติทันที</span>
+                            </label>
+                        </div>
+                        <div class="flex gap-2 pt-2">
+                            <button onclick="syncAllToWebhook()" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> ซิงค์ส่งชุดข้อมูลทั้งหมดขึ้น Google Sheet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-6 text-center border-t border-slate-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 space-y-1">
+            <p>© 2026 โรงพยาบาลพุนพิน จังหวัดสุราษฎร์ธานี • ระบบเวอร์ชันอัปเดตสำหรับ GitHub Pages</p>
+            <p class="text-slate-500 font-medium">
+                อ้างอิงเกณฑ์การป้องกันควบคุมการติดเชื้อจากสถาบันบำราศนราดูร • แผนก ICN
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        const CHECKLIST_ITEMS = [
+            { id: 1, text: "แจ้ง ICN ทันทีเมื่อมีผู้ป่วยติดเชื้อดื้อยามาใช้บริการ โทร 102" },
+            { id: 2, text: "แจ้งบุคลากรทุกคนในหอผู้ป่วยทราบ" },
+            { id: 3, text: "แยกผู้ป่วยในห้องแยกหรือโซนติดเชื้อชนิดเดียวกัน" },
+            { id: 4, text: "ติดป้าย Contact precautions ที่เตียงหรือหน้าห้องผู้ป่วย" },
+            { id: 5, text: "ไม่วางสิ่งของและอุปกรณ์ของใช้บนเตียงผู้ป่วย" },
+            { id: 6, text: "แยกอุปกรณ์ของใช้ เช่น ปรอทวัดไข้ เครื่องวัดความดัน หูฟัง รวมทั้งอุปกรณ์ทำความสะอาดเฉพาะรายต่อราย" },
+            { id: 7, text: "จัดเตรียม Alcohol gel hand rub ไว้ที่หน้าห้องผู้ป่วย/ปลายเตียงผู้ป่วย" },
+            { id: 8, text: "ล้างมือทุกครั้งก่อนและหลังสัมผัสผู้ป่วย หลังสัมผัสอุปกรณ์และสิ่งแวดล้อมในห้องผู้ป่วยด้วยน้ำยา 4% chlorhexidine gluconate" },
+            { id: 9, text: "สวมอุปกรณ์ป้องกันร่างกาย (ถุงมือ เสื้อคลุม mask) และถอดถุงมือ เสื้อคลุมก่อนออกจากห้องผู้ป่วย (สวม PPE รายต่อรายเท่านั้น)" },
+            { id: 10, text: "แยกผ้าและขยะเป็นประเภทติดเชื้อ" },
+            { id: 11, text: "ทำความสะอาดสิ่งแวดล้อมภายในห้องอย่างน้อยวันละ 1 ครั้ง ด้วยน้ำยา POSEQUAT 5G และเมื่อจำหน่ายผู้ป่วยอย่างน้อย 3 ครั้ง" },
+            { id: 12, text: "เคลื่อนย้ายผู้ป่วยแจ้งหน่วยงานที่เกี่ยวข้องและพนักงานเปลทราบพร้อมทั้งแขวนป้าย MDR" },
+            { id: 13, text: "พนักงานเปลสวมถุงมือ เสื้อกาวน์ mask ถูกต้องเหมาะสม มีผ้าคลุมเปลอีก 1 ชั้น มีน้ำยาทำความสะอาดเปล/ Alcohol gel hand rub" },
+            { id: 14, text: "จำกัดบุคลากร/ผู้เฝ้าไข้ให้น้อยที่สุดเข้าไปดูแลผู้ป่วยห้องแยก" },
+            { id: 15, text: "ให้คำแนะนำผู้ป่วยและญาติในการปฏิบัติตัว (แจกแผ่นพับ)" },
+            { id: 16, text: "ทำการเพาะเชื้อเพื่อยุติ contact precautions (พิจารณาเมื่อผลตรวจไม่พบเชื้อ อาการติดเชื้อหายไป)" }
+        ];
+
+        let audits = [];
+        let filteredAudits = [];
+        let editingId = null;
+        let activeTab = 'dashboard';
+        let searchQuery = '';
+
+        let formAnswers = {};
+        let formNotes = {};
+
+        window.onload = function() {
+            loadAuditsFromStorage();
+            loadWebhookSettings();
+            document.getElementById('input-eval-date').value = new Date().toISOString().split('T')[0];
+            resetFormAnswers();
+            generateFormQuestions();
+            
+            // Set Default dates inside custom range picker
+            document.getElementById('filter-start-date').value = new Date(Date.now() - 86400000 * 30).toISOString().split('T')[0];
+            document.getElementById('filter-end-date').value = new Date().toISOString().split('T')[0];
+            
+            applyFilters();
+            lucide.createIcons();
+        };
+
+        function loadAuditsFromStorage() {
+            const raw = localStorage.getItem('mdro_audits');
+            if (raw) {
+                audits = JSON.parse(raw);
+            } else {
+                // Mock Data ที่มีตัวอย่างของปีที่หลากหลาย เพื่อให้ทดสอบ Filter ได้ชัดเจน
+                const mockData = [
+                    {
+                        id: "mock-1",
+                        evalDate: "2026-06-15",
+                        checklist: {1:'yes', 2:'yes', 3:'yes', 4:'yes', 5:'no', 6:'yes', 7:'yes', 8:'yes', 9:'yes', 10:'yes', 11:'no', 12:'yes', 13:'yes', 14:'yes', 15:'yes', 16:'na'},
+                        notes: {5: "พบขวดน้ำวางบนเตียง", 11: "ไม่ได้ทำความสะอาดช่วงเที่ยง"},
+                        generalNotes: "ภาพรวมดีมากในปี 2026",
+                        complianceRate: 86.7, totalApplicable: 15, totalComplied: 13, totalNotComplied: 2, totalNA: 1
+                    },
+                    {
+                        id: "mock-2",
+                        evalDate: "2026-06-19",
+                        checklist: {1:'yes', 2:'yes', 3:'yes', 4:'yes', 5:'yes', 6:'yes', 7:'yes', 8:'yes', 9:'yes', 10:'yes', 11:'yes', 12:'yes', 13:'yes', 14:'yes', 15:'yes', 16:'yes'},
+                        notes: {},
+                        generalNotes: "ยอดเยี่ยม ปฏิบัติถูกต้องครบ 100%",
+                        complianceRate: 100.0, totalApplicable: 16, totalComplied: 16, totalNotComplied: 0, totalNA: 0
+                    },
+                    {
+                        id: "mock-3",
+                        evalDate: "2025-04-12",
+                        checklist: {1:'yes', 2:'no', 3:'yes', 4:'no', 5:'no', 6:'yes', 7:'yes', 8:'no', 9:'yes', 10:'yes', 11:'no', 12:'yes', 13:'yes', 14:'yes', 15:'na', 16:'na'},
+                        notes: {},
+                        generalNotes: "ข้อมูลตัวอย่างรอบประเมินปีเก่า 2025",
+                        complianceRate: 64.3, totalApplicable: 14, totalComplied: 9, totalNotComplied: 5, totalNA: 2
+                    }
+                ];
+                audits = mockData;
+                saveAuditsToStorage();
+            }
+        }
+
+        function saveAuditsToStorage() {
+            localStorage.setItem('mdro_audits', JSON.stringify(audits));
+            document.getElementById('count-badge').innerText = audits.length;
+        }
+
+        function clearAllData() {
+            if (confirm("คุณต้องการลบสถิติข้อมูลทั้งหมดใน LocalStorage บนเครื่องนี้ใช่หรือไม่? (ข้อมูลจะถูกรีเซ็ตใหม่)")) {
+                localStorage.removeItem('mdro_audits');
+                audits = [];
+                saveAuditsToStorage();
+                applyFilters();
+                showToast("ล้างข้อมูลเรียบร้อยแล้ว ระบบกลับสู่ค่าเริ่มต้น", "info");
+            }
+        }
+
+        function loadWebhookSettings() {
+            const savedUrl = localStorage.getItem('mdro_webhook_url');
+            const savedAuto = localStorage.getItem('mdro_auto_sync');
+            if (savedUrl) document.getElementById('webhook-url-input').value = savedUrl;
+            if (savedAuto === 'true') document.getElementById('auto-sync-checkbox').checked = true;
+        }
+
+        function saveWebhookSettings() {
+            const url = document.getElementById('webhook-url-input').value;
+            const auto = document.getElementById('auto-sync-checkbox').checked;
+            localStorage.setItem('mdro_webhook_url', url);
+            localStorage.setItem('mdro_auto_sync', auto);
+        }
+
+        function resetFormAnswers() {
+            formAnswers = {};
+            formNotes = {};
+            CHECKLIST_ITEMS.forEach(item => {
+                formAnswers[item.id] = 'yes';
+                formNotes[item.id] = '';
+            });
+            document.getElementById('input-general-notes').value = '';
+            document.getElementById('input-eval-date').value = new Date().toISOString().split('T')[0];
+        }
+
+        // CONTROL FILTER INPUTS VISIBILITY
+        function toggleFilterInputs() {
+            const type = document.getElementById('filter-type').value;
+            document.getElementById('filter-year-container').classList.add('hidden');
+            document.getElementById('filter-start-container').classList.add('hidden');
+            document.getElementById('filter-end-container').classList.add('hidden');
+            
+            if (type === 'year') {
+                document.getElementById('filter-year-container').classList.remove('hidden');
+            } else if (type === 'range') {
+                document.getElementById('filter-start-container').classList.remove('hidden');
+                document.getElementById('filter-end-container').classList.remove('hidden');
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const type = document.getElementById('filter-type').value;
+            
+            if (type === 'all') {
+                filteredAudits = [...audits];
+            } else if (type === 'year') {
+                const selectedYear = document.getElementById('filter-year').value;
+                filteredAudits = audits.filter(a => a.evalDate.startsWith(selectedYear));
+            } else if (type === 'range') {
+                const start = document.getElementById('filter-start-date').value;
+                const end = document.getElementById('filter-end-date').value;
+                filteredAudits = audits.filter(a => {
+                    return (!start || a.evalDate >= start) && (!end || a.evalDate <= end);
+                });
+            }
+            
+            // Sort standard by date descending for UI representation
+            filteredAudits.sort((a,b) => new Date(b.evalDate) - new Date(a.evalDate));
+            updateAppUI();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-type').value = 'all';
+            toggleFilterInputs();
+        }
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(section => section.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all text-emerald-100 hover:bg-white/10 hover:text-white";
+            });
+            document.getElementById('btn-tab-' + tabId).className = "tab-btn flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all bg-white text-emerald-900 shadow-sm";
+            
+            applyFilters();
+            lucide.createIcons();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let bgClass = "bg-emerald-50 border-emerald-200 text-emerald-800";
+            let icon = "check-circle-2";
+            if (type === 'error') { bgClass = "bg-rose-50 border-rose-200 text-rose-800"; icon = "x-circle"; }
+            else if (type === 'info') { bgClass = "bg-sky-50 border-sky-200 text-sky-800"; icon = "info"; }
+
+            toast.className = `p-4 rounded-xl shadow-lg border flex items-center gap-3 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${bgClass}`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0"></i><p class="font-semibold text-sm">${message}</p>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 50);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function generateFormQuestions() {
+            const container = document.getElementById('form-questions-container');
+            container.innerHTML = '';
+            CHECKLIST_ITEMS.forEach(item => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = "p-4 rounded-2xl bg-slate-50/55 border border-slate-100/80 space-y-3";
+                questionDiv.innerHTML = `
+                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center mt-0.5 font-mono">${item.id}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">${item.text}</span>
+                        </div>
+                        <div class="flex bg-slate-100 p-1 rounded-xl flex-shrink-0 self-end md:self-auto">
+                            <button type="button" onclick="setAnswer(${item.id}, 'yes')" id="btn-yes-${item.id}" class="choice-btn-${item.id} px-3 py-1 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 bg-emerald-500 text-white shadow-sm"><i data-lucide="check" class="w-3.5 h-3.5"></i> ปฏิบัติ</button>
+                            <button type="button" onclick="setAnswer(${item.id}, 'no')" id="btn-no-${item.id}" class="choice-btn-${item.id} px-3 py-1 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 text-slate-500 hover:text-slate-800"><i data-lucide="x-circle" class="w-3.5 h-3.5"></i> ไม่ปฏิบัติ</button>
+                            <button type="button" onclick="setAnswer(${item.id}, 'na')" id="btn-na-${item.id}" class="choice-btn-${item.id} px-3 py-1 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 text-slate-500 hover:text-slate-800"><i data-lucide="minus-circle" class="w-3.5 h-3.5"></i> N/A</button>
+                        </div>
+                    </div>
+                    <div class="pl-9"><input type="text" oninput="setNote(${item.id}, this.value)" id="note-${item.id}" placeholder="ระบุคำอธิบายเฉพาะข้อนี้ (ถ้ามี)" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" /></div>
+                `;
+                container.appendChild(questionDiv);
+            });
+        }
+
+        function setAnswer(itemId, val) {
+            formAnswers[itemId] = val;
+            document.querySelectorAll(`.choice-btn-${itemId}`).forEach(btn => btn.className = `choice-btn-${itemId} px-3 py-1 text-xs font-extrabold rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center gap-1`);
+            const activeBtn = document.getElementById(`btn-${val}-${itemId}`);
+            if (val === 'yes') activeBtn.className = `choice-btn-${itemId} px-3 py-1 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 bg-emerald-500 text-white shadow-sm`;
+            if (val === 'no') activeBtn.className = `choice-btn-${itemId} px-3 py-1 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 bg-rose-500 text-white shadow-sm`;
+            if (val === 'na') activeBtn.className = `choice-btn-${itemId} px-3 py-1 text-xs font-extrabold rounded-lg transition-all flex items-center gap-1 bg-slate-400 text-white shadow-sm`;
+            lucide.createIcons();
+        }
+
+        function setNote(itemId, val) { formNotes[itemId] = val; }
+
+        function openNewAuditForm() {
+            editingId = null;
+            document.getElementById('form-tab-text').innerText = 'บันทึกประเมินใหม่';
+            document.getElementById('form-title').innerText = 'วันเวลาที่ตรวจประเมิน';
+            resetFormAnswers();
+            CHECKLIST_ITEMS.forEach(item => {
+                setAnswer(item.id, 'yes');
+                document.getElementById(`note-${item.id}`).value = '';
+            });
+            switchTab('form');
+        }
+
+        function cancelForm() { resetFormAnswers(); switchTab('dashboard'); }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const evalDate = document.getElementById('input-eval-date').value;
+            const generalNotes = document.getElementById('input-general-notes').value;
+
+            let complied = 0, notComplied = 0, na = 0;
+            Object.values(formAnswers).forEach(ans => {
+                if (ans === 'yes') complied++;
+                else if (ans === 'no') notComplied++;
+                else if (ans === 'na') na++;
+            });
+
+            const applicable = complied + notComplied;
+            const complianceRate = applicable > 0 ? parseFloat(((complied / applicable) * 100).toFixed(1)) : 0.0;
+
+            const payload = {
+                evalDate: evalDate,
+                checklist: { ...formAnswers },
+                notes: { ...formNotes },
+                generalNotes: generalNotes,
+                complianceRate: complianceRate,
+                totalApplicable: applicable,
+                totalComplied: complied,
+                totalNotComplied: notComplied,
+                totalNA: na
+            };
+
+            if (editingId) {
+                const index = audits.findIndex(a => a.id === editingId);
+                if (index !== -1) {
+                    audits[index] = { ...audits[index], ...payload };
+                    showToast("แก้ไขข้อมูลรอบการประเมินเรียบร้อยแล้ว");
+                }
+                editingId = null;
+            } else {
+                payload.id = 'audit_' + Date.now();
+                audits.unshift(payload);
+                showToast("บันทึกข้อมูลการประเมินสำเร็จ");
+            }
+
+            saveAuditsToStorage();
+            resetFilters(); // Reset filter so new record is visible
+            resetFormAnswers();
+            switchTab('dashboard');
+        }
+
+        function handleEdit(id) {
+            const audit = audits.find(a => a.id === id);
+            if (!audit) return;
+            editingId = id;
+            document.getElementById('form-tab-text').innerText = 'แก้ไขการประเมิน';
+            document.getElementById('input-eval-date').value = audit.evalDate;
+            document.getElementById('input-general-notes').value = audit.generalNotes || '';
+            CHECKLIST_ITEMS.forEach(item => {
+                const ans = audit.checklist[item.id] || 'yes';
+                const note = audit.notes[item.id] || '';
+                setAnswer(item.id, ans);
+                document.getElementById(`note-${item.id}`).value = note;
+                formNotes[item.id] = note;
+            });
+            switchTab('form');
+        }
+
+        function handleDelete(id) {
+            if (confirm("ลบแบบประเมินนี้รอบนี้?")) {
+                audits = audits.filter(a => a.id !== id);
+                saveAuditsToStorage();
+                showToast("ลบข้อมูลเรียบร้อย", "info");
+                applyFilters();
+            }
+        }
+
+        function updateAppUI() {
+            document.getElementById('count-badge').innerText = audits.length;
+            if (activeTab === 'dashboard') renderDashboard();
+            else if (activeTab === 'list') renderLogs();
+        }
+
+        // DASHBOARD CALCULATIONS (BASED ON FILTERED DATA)
+        function renderDashboard() {
+            const totalCount = filteredAudits.length;
+            document.getElementById('dash-summary-count').innerText = `วิเคราะห์ผลตามตัวกรองสำเร็จ: ทั้งหมด ${totalCount} รายการ`;
+            
+            if (totalCount === 0) {
+                updateGauge(0);
+                document.getElementById('dash-compliance-text').innerText = "0%";
+                document.getElementById('dash-total-audits').innerText = "0";
+                document.getElementById('dash-passed-count').innerText = "0 รายการ";
+                document.getElementById('dash-failed-count').innerText = "0 รายการ";
+                document.getElementById('dash-perfect-count').innerText = "0 ครั้ง";
+                document.getElementById('dash-poor-count').innerText = "0 ครั้ง";
+                document.getElementById('trend-bars-container').innerHTML = '<div class="text-[10px] text-slate-400 w-full text-center pb-4">ไม่มีข้อมูล</div>';
+                document.getElementById('top-failed-container').innerHTML = '<div class="text-xs text-slate-400 p-2">ไม่มีข้อมูลปัญหา</div>';
+                renderItemStatsEmpty();
+                return;
+            }
+
+            let grandComplied = 0, grandApplicable = 0;
+            let passedCount = 0, failedCount = 0;
+            let perfectCount = 0, poorCount = 0;
+
+            const itemCounts = {};
+            CHECKLIST_ITEMS.forEach(i => itemCounts[i.id] = { yes: 0, no: 0, na: 0 });
+
+            filteredAudits.forEach(a => {
+                grandComplied += (a.totalComplied || 0);
+                grandApplicable += ((a.totalComplied || 0) + (a.totalNotComplied || 0));
+
+                if (a.complianceRate >= 80) passedCount++;
+                else failedCount++;
+
+                if (a.complianceRate === 100) perfectCount++;
+                if (a.complianceRate < 50) poorCount++;
+
+                CHECKLIST_ITEMS.forEach(item => {
+                    const status = a.checklist[item.id] || 'na';
+                    if (status === 'yes') itemCounts[item.id].yes++;
+                    else if (status === 'no') itemCounts[item.id].no++;
+                    else if (status === 'na') itemCounts[item.id].na++;
+                });
+            });
+
+            const overallCompliance = grandApplicable > 0 ? Math.round((grandComplied / grandApplicable) * 100) : 0;
+            
+            updateGauge(overallCompliance);
+            document.getElementById('dash-compliance-text').innerText = `${overallCompliance}%`;
+            document.getElementById('dash-total-audits').innerText = totalCount;
+            document.getElementById('dash-passed-count').innerText = `${passedCount} รายการ`;
+            document.getElementById('dash-failed-count').innerText = `${failedCount} รายการ`;
+            document.getElementById('dash-perfect-count').innerText = `${perfectCount} ครั้ง`;
+            document.getElementById('dash-poor-count').innerText = `${poorCount} ครั้ง`;
+
+            // RENDER RECENT TREND COMPLIANCE MINI BARS
+            renderTrendBars();
+
+            // RENDER TOP 5 PROBLEMS
+            renderTopProblems(itemCounts);
+
+            // RENDER 1-16 ITEMS LIST
+            renderItemStats(itemCounts);
+        }
+
+        function updateGauge(percent) {
+            const circle = document.getElementById('gauge-circle');
+            const circumference = 326.7; // 2 * pi * 52
+            const offset = circumference - (circumference * percent) / 100;
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function renderTrendBars() {
+            const container = document.getElementById('trend-bars-container');
+            container.innerHTML = '';
+            
+            // Take up to 10 historical entries, reversed order to read past -> present
+            const timelineData = [...filteredAudits].slice(0, 10).reverse();
+            
+            timelineData.forEach(audit => {
+                const heightPercent = audit.complianceRate;
+                const barColor = heightPercent >= 80 ? 'bg-emerald-500' : heightPercent >= 50 ? 'bg-amber-400' : 'bg-rose-500';
+                
+                const barWrapper = document.createElement('div');
+                barWrapper.className = "flex-1 flex flex-col items-center group relative h-full justify-end";
+                barWrapper.innerHTML = `
+                    <div class="text-[8px] font-mono text-slate-400 hidden group-hover:block absolute -top-5 bg-slate-800 text-white rounded px-1 z-10 whitespace-nowrap">${audit.evalDate}: ${heightPercent}%</div>
+                    <div class="${barColor} w-full rounded-t-sm transition-all duration-500" style="height: ${heightPercent}%"></div>
+                `;
+                container.appendChild(barWrapper);
+            });
+        }
+
+        function renderTopProblems(itemCounts) {
+            const container = document.getElementById('top-failed-container');
+            container.innerHTML = '';
+
+            // Calculate non-compliance counts array
+            const arrays = CHECKLIST_ITEMS.map(item => {
+                return {
+                    id: item.id,
+                    text: item.text,
+                    noCount: itemCounts[item.id].no
+                };
+            });
+
+            // Sort by 'no' counts descending, and filter out items that haven't been violated
+            const sortedProblems = arrays.filter(p => p.noCount > 0).sort((a,b) => b.noCount - a.noCount).slice(0, 5);
+
+            if (sortedProblems.length === 0) {
+                container.innerHTML = `
+                    <div class="p-4 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-2xl border border-emerald-100 flex items-center gap-2">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i> ยอดเยี่ยม! ไม่พบข้อปฏิบัติที่ผิดพลาดในตัวกรองนี้
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            sortedProblems.forEach((prob, idx) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "p-3 bg-rose-50/60 border border-rose-100 rounded-xl flex items-start gap-2.5";
+                itemDiv.innerHTML = `
+                    <span class="w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">${idx + 1}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-slate-700 truncate">ข้อ ${prob.id}: ${prob.text}</p>
+                        <p class="text-[10px] font-bold text-rose-600 mt-0.5">พบการไม่ปฏิบัติ: ${prob.noCount} รอบ</p>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function renderItemStatsEmpty() {
+            const container = document.getElementById('items-statistics-container');
+            container.innerHTML = '';
+            CHECKLIST_ITEMS.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "grid grid-cols-1 md:grid-cols-12 gap-2 items-center border-b border-slate-50 pb-2.5 text-xs";
+                row.innerHTML = `
+                    <div class="md:col-span-6 flex gap-2 items-start">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center font-mono text-[10px]">${item.id}</span>
+                        <p class="text-slate-700 font-medium truncate">${item.text}</p>
+                    </div>
+                    <div class="md:col-span-6 flex items-center gap-2">
+                        <div class="flex-1 bg-slate-100 h-2.5 rounded-full flex overflow-hidden">
+                            <div class="w-full text-center text-[9px] text-slate-300">ไม่มีข้อมูลตามคำกรอง</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function renderItemStats(countsMap) {
+            const container = document.getElementById('items-statistics-container');
+            container.innerHTML = '';
+
+            CHECKLIST_ITEMS.forEach(item => {
+                const stats = countsMap[item.id];
+                const totalApplicable = stats.yes + stats.no;
+                const yesPercent = totalApplicable > 0 ? Math.round((stats.yes / totalApplicable) * 100) : 0;
+                const noPercent = totalApplicable > 0 ? Math.round((stats.no / totalApplicable) * 100) : 0;
+
+                const row = document.createElement('div');
+                row.className = "grid grid-cols-1 md:grid-cols-12 gap-2 items-center border-b border-slate-50 pb-2.5 text-xs";
+                row.innerHTML = `
+                    <div class="md:col-span-6 flex gap-2 items-start" title="${item.text}">
+                        <span class="flex-shrink-0 w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center font-mono text-[10px]">${item.id}</span>
+                        <p class="text-slate-700 font-semibold truncate md:whitespace-normal md:line-clamp-1">${item.text}</p>
+                    </div>
+                    <div class="md:col-span-3 text-[10px] font-bold text-slate-500 flex justify-between md:justify-around">
+                        <span>ทำ: <span class="text-emerald-600 font-mono">${stats.yes}</span></span>
+                        <span>ไม่ทำ: <span class="text-rose-600 font-mono">${stats.no}</span></span>
+                        <span>N/A: <span class="text-slate-400 font-mono">${stats.na}</span></span>
+                    </div>
+                    <div class="md:col-span-3 flex items-center gap-2">
+                        <div class="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
+                            ${totalApplicable > 0 ? `
+                                <div class="bg-emerald-500 h-full" style="width: ${yesPercent}%"></div>
+                                <div class="bg-rose-400 h-full" style="width: ${noPercent}%"></div>
+                            ` : `
+                                <div class="bg-slate-200 w-full h-full text-[9px] text-center text-slate-400">N/A</div>
+                            `}
+                        </div>
+                        <span class="text-[10px] font-black text-slate-700 w-8 text-right font-mono">
+                            ${totalApplicable > 0 ? `${yesPercent}%` : '-'}
+                        </span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '';
+            const query = searchQuery.trim().toLowerCase();
+            
+            // Filter logs based on search input additionally
+            const searched = filteredAudits.filter(a => {
+                return (a.evalDate.includes(query) || (a.generalNotes && a.generalNotes.toLowerCase().includes(query)));
+            });
+
+            if (searched.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-8 text-center rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                        <i data-lucide="clipboard-list" class="w-10 h-10 text-slate-300 mb-2"></i>
+                        <p class="text-slate-500 font-bold text-sm">ไม่พบประวัติผลการประเมินที่ค้นหา</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            searched.forEach((audit, index) => {
+                const scoreColor = audit.complianceRate >= 80 ? 'text-emerald-600 border-emerald-100 bg-emerald-50/50' : 'text-amber-600 border-amber-100 bg-amber-50/50';
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-3xl p-5 shadow-sm border border-slate-100/80 flex flex-col md:flex-row md:items-center justify-between gap-4";
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-extrabold text-slate-800 text-sm">การประเมินรอบวันที่ ${audit.evalDate}</h4>
+                            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-mono">ID: ${audit.id.substring(6,12)}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 truncate max-w-xl">${audit.generalNotes ? `หมายเหตุ: <strong>${audit.generalNotes}</strong>` : 'ไม่มีบันทึกเพิ่มเติม'}</p>
+                    </div>
+                    <div class="flex items-center justify-between md:justify-end gap-4 border-t border-slate-50 pt-3 md:border-0 md:pt-0">
+                        <div class="text-[10px] font-bold text-slate-400 space-y-0.5">
+                            <div>ปฏิบัติ: <span class="text-emerald-600 font-mono">${audit.totalComplied}</span></div>
+                            <div>ไม่ปฏิบัติ: <span class="text-rose-500 font-mono">${audit.totalNotComplied}</span></div>
+                        </div>
+                        <div class="px-3 py-1.5 rounded-xl border text-center font-black ${scoreColor} text-sm font-mono">${audit.complianceRate}%</div>
+                        <div class="flex gap-1">
+                            <button onclick="handleEdit('${audit.id}')" class="px-3 py-1.5 text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-xl transition-all">แก้ไข</button>
+                            <button onclick="handleDelete('${audit.id}')" class="p-1.5 text-rose-600 hover:text-rose-700 bg-rose-50 rounded-xl"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('search-input').value;
+            renderLogs();
+        }
+
+        // CSV EXPORTER (ONLY EXPORTS CURRENTLY FILTERED AUDITS)
+        function handleExportCSV() {
+            if (filteredAudits.length === 0) {
+                showToast("ไม่มีข้อมูลภายใต้เงื่อนไขตัวกรองนี้ให้ออกรายงาน", "error");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            const headers = ["รหัสบันทึก", "วันที่ประเมิน", "% ปฏิบัติถูกต้อง", "รวมข้อปฏิบัติ", "รวมข้อไม่ปฏิบัติ", "รวมข้อไม่เกี่ยวข้อง"];
+            CHECKLIST_ITEMS.forEach(item => {
+                headers.push(`ข้อ ${item.id} สถานะ`, `ข้อ ${item.id} หมายเหตุ`);
+            });
+            headers.push("หมายเหตุทั่วไปภาพรวม");
+
+            csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\r\n";
+
+            filteredAudits.forEach(audit => {
+                const row = [audit.id, audit.evalDate, `${audit.complianceRate}%`, audit.totalComplied, audit.totalNotComplied, audit.totalNA];
+                CHECKLIST_ITEMS.forEach(item => {
+                    const status = audit.checklist?.[item.id] || "na";
+                    const statusText = status === 'yes' ? 'ปฏิบัติ' : status === 'no' ? 'ไม่ปฏิบัติ' : 'ไม่เกี่ยวข้อง';
+                    row.push(statusText, audit.notes?.[item.id] || "");
+                });
+                row.push(audit.generalNotes || "");
+                csvContent += row.map(r => `"${String(r).replace(/"/g, '""')}"`).join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `MDR_REPORT_FILTERED_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("ดาวน์โหลดไฟล์รายงาน CSV ตามตัวกรองเรียบร้อย");
+        }
+
+        async function syncAllToWebhook() {
+            const webhookUrl = document.getElementById('webhook-url-input').value;
+            if (!webhookUrl) { showToast("กรุณาระบุ Webhook URL", "error"); return; }
+            if (filteredAudits.length === 0) { showToast("ไม่มีข้อมูลให้อัปโหลด", "error"); return; }
+
+            showToast("กำลังซิงค์ข้อมูลตามตัวกรองขึ้น Google Sheet...", "info");
+            let successCount = 0;
+
+            for (const audit of filteredAudits) {
+                try {
+                    await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        mode: 'no-cors',
+                        body: JSON.stringify(audit)
+                    });
+                    successCount++;
+                } catch (e) { console.error(e); }
+            }
+            showToast(`ซิงค์ข้อมูลสำเร็จ (${successCount}/${filteredAudits.length} รายการ)`);
+        }
+    </script>
+</body>
+</html>
