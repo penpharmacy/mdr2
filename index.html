@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MDR Checklist & Dashboard - โรงพยาบาลพุนพิน</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter & Sarabun Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
@@ -22,8 +25,10 @@
 </head>
 <body class="min-h-screen text-slate-800 flex flex-col antialiased">
 
+    <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+    <!-- Header Banner -->
     <header class="bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -34,11 +39,12 @@
                     <div>
                         <h1 class="text-xl md:text-2xl font-bold tracking-tight">แบบประเมินการปฏิบัติในการดูแลผู้ป่วยเชื้อดื้อยา (MDR Checklist)</h1>
                         <p class="text-emerald-100 text-xs md:text-sm font-medium mt-0.5">
-                            เวอร์ชันประเมินด่วน (ไม่ระบุตัวตนผู้ป่วย) • โรงพยาบาลพุนพิน (ปรับปรุงล่าสุด 2026)
+                            เวอร์ชันประเมินด่วน (ไม่ระบุตัวตนผู้ป่วย) • โรงพยาบาลพุนพิน
                         </p>
                     </div>
                 </div>
                 
+                <!-- Quick Actions -->
                 <div class="flex flex-wrap items-center gap-2">
                     <button onclick="openNewAuditForm()" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-md transition-all transform active:scale-95">
                         <i data-lucide="plus" class="w-4 h-4"></i> เริ่มประเมินด่วน
@@ -50,6 +56,7 @@
             </div>
         </div>
 
+        <!-- Navigation Tabs -->
         <div class="border-t border-white/10 bg-black/10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <nav class="flex space-x-1 py-2 overflow-x-auto scrollbar-none" aria-label="Tabs">
@@ -70,10 +77,15 @@
         </div>
     </header>
 
+    <!-- Main Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
 
+        <!-- ==========================================
+            TAB: DASHBOARD ANALYTICS
+           ========================================== -->
         <section id="tab-dashboard" class="tab-content space-y-6">
             
+            <!-- MASTER FILTER CONTROLS -->
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
                     <div class="flex items-center gap-2">
@@ -125,7 +137,9 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- GAUGES AND KPI OVERVIEW -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <!-- KPI 1: Compliance Gauge -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
                     <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-4">อัตราปฏิบัติถูกต้อง (Compliance)</h3>
                     <div class="relative flex items-center justify-center">
@@ -141,6 +155,7 @@
                     <p class="mt-3 text-[10px] text-slate-400 leading-tight">คำนวณจากข้อปฏิบัติที่เข้าข่ายจริง (ไม่นับรวม N/A)</p>
                 </div>
 
+                <!-- KPI 2: KPI PASS / FAIL -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
                         <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">เป้าหมายตัวชี้วัดองค์กร (KPI)</h3>
@@ -160,6 +175,7 @@
                     </div>
                 </div>
 
+                <!-- KPI 3: Audits Count -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
                         <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">จำนวนรอบตรวจประเมิน</h3>
@@ -180,38 +196,78 @@
                     </div>
                 </div>
 
+                <!-- KPI 4: Compliance Trend -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
                     <div>
-                        <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">แนวโน้มผลความสมบูรณ์ (Trend)</h3>
+                        <h3 class="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">แนวโน้มความสมบูรณ์ (Trend)</h3>
                         <p class="text-[11px] text-slate-400 mb-2">แสดงทิศทางการปฏิบัติตามไทม์ไลน์</p>
-                        
-                        <div class="flex items-end gap-1 h-14 pt-2" id="trend-bars-container">
-                            </div>
+                        <div class="flex items-end gap-1.5 h-14 pt-2" id="trend-bars-container">
+                            <!-- Bars rendered dynamically -->
+                        </div>
                     </div>
                     <div class="text-[10px] text-slate-400 text-right pt-2 border-t border-slate-50">เรียงจากอดีต → ล่าสุด</div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- ==========================================================
+                NEW HORIZONTAL BAR CHART (ตัวอย่างผลการปฏิบัติรายข้อ)
+               ========================================================== -->
+            <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
+                <div class="border-b border-slate-100 pb-3 mb-6">
+                    <h3 class="text-lg font-bold text-slate-800">ตัวอย่างผลการปฏิบัติรายข้อ</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">เปอร์เซ็นต์การปฏิบัติถูกต้องของแต่ละข้อ (อ้างอิงข้อมูลจากการประเมินตามตัวกรอง)</p>
+                </div>
+
+                <!-- Chart Wrapper with Grid System -->
+                <div class="relative py-4">
+                    <!-- Background Guide Grid Lines at 0%, 30%, 60%, 90% (Matching image_b07868.png) -->
+                    <div class="absolute inset-0 pl-16 pr-6 pt-2 pb-10 flex justify-between pointer-events-none z-0">
+                        <div class="h-full border-l border-slate-100"></div> <!-- 0% Grid -->
+                        <div class="h-full border-l border-dashed border-slate-200/80"></div> <!-- 30% Grid -->
+                        <div class="h-full border-l border-dashed border-slate-200/80"></div> <!-- 60% Grid -->
+                        <div class="h-full border-l border-dashed border-slate-200/80"></div> <!-- 90% Grid -->
+                        <div class="h-full border-l border-slate-100"></div> <!-- 100% Grid -->
+                    </div>
+
+                    <!-- Chart Bars Stacked vertically -->
+                    <div id="image-bar-chart-container" class="space-y-4 relative z-10 pl-16 pr-6">
+                        <!-- Populated by JavaScript -->
+                    </div>
+
+                    <!-- Bottom Axis Labels -->
+                    <div class="absolute bottom-[-16px] left-0 right-0 pl-16 pr-6 flex justify-between text-[11px] font-bold text-slate-400 select-none">
+                        <span>0%</span>
+                        <span>30%</span>
+                        <span>60%</span>
+                        <span>90%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+                <!-- TOP 5 PROBLEMS -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 lg:col-span-1 flex flex-col justify-between">
                     <div>
                         <div class="border-b border-slate-100 pb-3 mb-4">
                             <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                                 <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i>
-                                Top 5 ข้อปฏิบัติที่เป็นปัญหามากที่สุด
+                                Top 5 ข้อที่ปฏิบัติได้น้อยที่สุด
                             </h3>
                             <p class="text-[11px] text-slate-400 mt-0.5">เรียงตามลำดับข้อที่ทีมงาน "ไม่ปฏิบัติ" บ่อยที่สุด</p>
                         </div>
                         <div id="top-failed-container" class="space-y-3">
-                            </div>
+                            <!-- Dynamic generation -->
+                        </div>
                     </div>
                 </div>
 
+                <!-- SUMMARY TABLE & PERCENTAGE 1-16 -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 lg:col-span-2">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
                         <div>
-                            <h3 class="text-sm font-bold text-slate-800">ตารางสรุปผลและเปอร์เซ็นต์ปฏิบัติรายข้อ (1-16 ข้อ)</h3>
-                            <p class="text-[11px] text-slate-400 mt-0.5">สัดส่วนคำนวณเปรียบเทียบในรูปแบบ แผนภูมิแถบสถานะ</p>
+                            <h3 class="text-sm font-bold text-slate-800">ตารางสรุป % ปฏิบัติ / ไม่ปฏิบัติ รายข้อ (1-16 ข้อ)</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">สรุปจำนวนครั้งเพื่อตรวจสอบคุณภาพในการดูแลผู้ป่วย</p>
                         </div>
                         <div class="flex items-center gap-3 text-[10px] font-bold">
                             <span class="flex items-center gap-1 text-slate-500"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span>ปฏิบัติ</span>
@@ -220,13 +276,18 @@
                     </div>
 
                     <div id="items-statistics-container" class="space-y-3.5 max-h-[380px] overflow-y-auto pr-1 scrollbar-none">
-                        </div>
+                        <!-- Dynamic generation via JS -->
+                    </div>
                 </div>
             </div>
         </section>
 
+        <!-- ==========================================
+            TAB: CHECKLIST FORM (INPUT NEW / EDIT)
+           ========================================== -->
         <section id="tab-form" class="tab-content hidden max-w-4xl mx-auto">
             <form id="audit-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                <!-- Date input -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                     <div class="flex items-center gap-3 border-b border-slate-100 pb-3 mb-4">
                         <i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i>
@@ -238,6 +299,7 @@
                     </div>
                 </div>
 
+                <!-- Checklist Items Container -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-6">
                         <div class="flex items-center gap-3">
@@ -248,14 +310,17 @@
                     </div>
 
                     <div id="form-questions-container" class="space-y-4">
-                        </div>
+                        <!-- Generates 16 questions dynamically -->
+                    </div>
                 </div>
 
+                <!-- General Comments -->
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-3">
                     <label class="text-sm font-bold text-slate-700 block">บันทึกเพิ่มเติม / ข้อสังเกตเพิ่มเติมภาพรวม</label>
-                    <textarea id="input-general-notes" rows="3" placeholder="เช่น ตรวจพบสิ่งแวดล้อมไม่สะอาดบางจุด, ความร่วมมือของญาติอยู่ในเกณฑ์ดี..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></textarea>
+                    <textarea id="input-general-notes" rows="3" placeholder="เช่น ตรวจพบสิ่งแวดล้อมไม่สะอาดบางจุด..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"></textarea>
                 </div>
 
+                <!-- Form Buttons -->
                 <div class="flex items-center justify-end gap-3">
                     <button type="button" onclick="cancelForm()" class="px-6 py-2.5 bg-slate-200 hover:bg-slate-300 rounded-xl text-sm font-bold text-slate-600 transition-all">
                         ยกเลิก
@@ -267,6 +332,9 @@
             </form>
         </section>
 
+        <!-- ==========================================
+            TAB: AUDIT LOGS (HISTORY RECORDS LIST)
+           ========================================== -->
         <section id="tab-list" class="tab-content hidden space-y-6">
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex-1 max-w-md relative">
@@ -276,9 +344,13 @@
             </div>
 
             <div id="logs-container" class="space-y-4">
-                </div>
+                <!-- Dynamically generated list -->
+            </div>
         </section>
 
+        <!-- ==========================================
+            TAB: SYNC CONFIG (GOOGLE SHEETS INTEGRATION)
+           ========================================== -->
         <section id="tab-sync" class="tab-content hidden max-w-4xl mx-auto space-y-6">
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6">
                 <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
@@ -297,7 +369,6 @@
                         <div class="space-y-1.5">
                             <label class="text-xs font-bold text-slate-500 uppercase">Google Apps Script Web App URL</label>
                             <input type="url" id="webhook-url-input" oninput="saveWebhookSettings()" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-                            <p class="text-[11px] text-slate-400">หากท่านนำสคริปต์ไปติดตั้งใน Google Sheets ให้นำ URL ที่คัดลอกมาวางในช่องนี้</p>
                         </div>
                         <div class="flex items-center gap-3">
                             <label class="relative inline-flex items-center cursor-pointer">
@@ -318,6 +389,7 @@
 
     </main>
 
+    <!-- Footer -->
     <footer class="bg-slate-900 text-slate-400 py-6 text-center border-t border-slate-800 text-xs">
         <div class="max-w-7xl mx-auto px-4 space-y-1">
             <p>© 2026 โรงพยาบาลพุนพิน จังหวัดสุราษฎร์ธานี • ระบบเวอร์ชันอัปเดตสำหรับ GitHub Pages</p>
@@ -327,6 +399,9 @@
         </div>
     </footer>
 
+    <!-- ==========================================
+        APPLICATION JAVASCRIPT (CORE LOGIC)
+       ========================================== -->
     <script>
         const CHECKLIST_ITEMS = [
             { id: 1, text: "แจ้ง ICN ทันทีเมื่อมีผู้ป่วยติดเชื้อดื้อยามาใช้บริการ โทร 102" },
@@ -376,7 +451,7 @@
             if (raw) {
                 audits = JSON.parse(raw);
             } else {
-                // Mock Data ที่มีตัวอย่างของปีที่หลากหลาย เพื่อให้ทดสอบ Filter ได้ชัดเจน
+                // Mock Data with distinct years for testing filters flawlessly
                 const mockData = [
                     {
                         id: "mock-1",
@@ -448,7 +523,6 @@
             document.getElementById('input-eval-date').value = new Date().toISOString().split('T')[0];
         }
 
-        // CONTROL FILTER INPUTS VISIBILITY
         function toggleFilterInputs() {
             const type = document.getElementById('filter-type').value;
             document.getElementById('filter-year-container').classList.add('hidden');
@@ -480,7 +554,6 @@
                 });
             }
             
-            // Sort standard by date descending for UI representation
             filteredAudits.sort((a,b) => new Date(b.evalDate) - new Date(a.evalDate));
             updateAppUI();
         }
@@ -614,7 +687,7 @@
             }
 
             saveAuditsToStorage();
-            resetFilters(); // Reset filter so new record is visible
+            resetFilters(); 
             resetFormAnswers();
             switchTab('dashboard');
         }
@@ -651,7 +724,8 @@
             else if (activeTab === 'list') renderLogs();
         }
 
-        // DASHBOARD CALCULATIONS (BASED ON FILTERED DATA)
+        // ==========================================================
+        // ==========================================================
         function renderDashboard() {
             const totalCount = filteredAudits.length;
             document.getElementById('dash-summary-count').innerText = `วิเคราะห์ผลตามตัวกรองสำเร็จ: ทั้งหมด ${totalCount} รายการ`;
@@ -666,6 +740,12 @@
                 document.getElementById('dash-poor-count').innerText = "0 ครั้ง";
                 document.getElementById('trend-bars-container').innerHTML = '<div class="text-[10px] text-slate-400 w-full text-center pb-4">ไม่มีข้อมูล</div>';
                 document.getElementById('top-failed-container').innerHTML = '<div class="text-xs text-slate-400 p-2">ไม่มีข้อมูลปัญหา</div>';
+                
+                // Reset Charts
+                document.getElementById('image-bar-chart-container').innerHTML = `
+                    <div class="text-center py-12 text-slate-400 text-sm font-semibold">
+                        ไม่มีข้อมูลผลการปฏิบัติรายข้อสำหรับการกรองนี้
+                    </div>`;
                 renderItemStatsEmpty();
                 return;
             }
@@ -705,19 +785,17 @@
             document.getElementById('dash-perfect-count').innerText = `${perfectCount} ครั้ง`;
             document.getElementById('dash-poor-count').innerText = `${poorCount} ครั้ง`;
 
-            // RENDER RECENT TREND COMPLIANCE MINI BARS
             renderTrendBars();
-
-            // RENDER TOP 5 PROBLEMS
             renderTopProblems(itemCounts);
-
-            // RENDER 1-16 ITEMS LIST
+            
+            // Render Both New Visual Horizontal Bar Chart and old summary table
+            renderHorizontalBarChart(itemCounts);
             renderItemStats(itemCounts);
         }
 
         function updateGauge(percent) {
             const circle = document.getElementById('gauge-circle');
-            const circumference = 326.7; // 2 * pi * 52
+            const circumference = 326.7; 
             const offset = circumference - (circumference * percent) / 100;
             circle.style.strokeDashoffset = offset;
         }
@@ -726,7 +804,6 @@
             const container = document.getElementById('trend-bars-container');
             container.innerHTML = '';
             
-            // Take up to 10 historical entries, reversed order to read past -> present
             const timelineData = [...filteredAudits].slice(0, 10).reverse();
             
             timelineData.forEach(audit => {
@@ -743,11 +820,51 @@
             });
         }
 
+        // ==========================================================
+        // ==========================================================
+        function renderHorizontalBarChart(itemCounts) {
+            const container = document.getElementById('image-bar-chart-container');
+            container.innerHTML = '';
+
+            CHECKLIST_ITEMS.forEach(item => {
+                const stats = itemCounts[item.id];
+                const totalApplicable = stats.yes + stats.no;
+                const yesPercent = totalApplicable > 0 ? Math.round((stats.yes / totalApplicable) * 100) : 0;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center group relative h-8";
+                row.innerHTML = `
+                    <!-- Row label (e.g. ข้อ 1, ข้อ 2) -->
+                    <div class="absolute -left-16 w-14 text-right text-xs sm:text-sm font-semibold text-slate-600 select-none">
+                        ข้อ ${item.id}
+                    </div>
+                    
+                    <!-- Horizontal Bar Outer wrapper -->
+                    <div class="flex-1 bg-slate-50 h-7 rounded-lg overflow-hidden flex items-center relative group-hover:bg-slate-100 transition-colors">
+                        
+                        <!-- Beautiful Blue Bar with rounded ends -->
+                        <div class="bg-[#5B9DFF] hover:bg-[#4a8ceb] h-full rounded-lg transition-all duration-1000 flex items-center justify-end px-3 shadow-sm" style="width: ${yesPercent}%">
+                            <!-- Inside label shown when width allows -->
+                            ${yesPercent >= 12 ? `<span class="text-[10px] sm:text-xs text-white font-extrabold font-mono">${yesPercent}%</span>` : ''}
+                        </div>
+                        
+                        <!-- Outside label shown if the bar is too small -->
+                        ${yesPercent < 12 ? `<span class="text-[10px] sm:text-xs text-slate-500 font-extrabold font-mono pl-2">${yesPercent}%</span>` : ''}
+
+                        <!-- Realtime Info Tooltip on hover -->
+                        <span class="absolute left-3 text-[10px] text-slate-800 pointer-events-none truncate pr-16 opacity-0 group-hover:opacity-100 transition-opacity font-medium hidden md:block">
+                            ${item.text} | ปฏิบัติ: ${stats.yes} ครั้ง, ไม่ปฏิบัติ: ${stats.no} ครั้ง
+                        </span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
         function renderTopProblems(itemCounts) {
             const container = document.getElementById('top-failed-container');
             container.innerHTML = '';
 
-            // Calculate non-compliance counts array
             const arrays = CHECKLIST_ITEMS.map(item => {
                 return {
                     id: item.id,
@@ -756,7 +873,6 @@
                 };
             });
 
-            // Sort by 'no' counts descending, and filter out items that haven't been violated
             const sortedProblems = arrays.filter(p => p.noCount > 0).sort((a,b) => b.noCount - a.noCount).slice(0, 5);
 
             if (sortedProblems.length === 0) {
@@ -849,7 +965,6 @@
             container.innerHTML = '';
             const query = searchQuery.trim().toLowerCase();
             
-            // Filter logs based on search input additionally
             const searched = filteredAudits.filter(a => {
                 return (a.evalDate.includes(query) || (a.generalNotes && a.generalNotes.toLowerCase().includes(query)));
             });
@@ -899,7 +1014,7 @@
             renderLogs();
         }
 
-        // CSV EXPORTER (ONLY EXPORTS CURRENTLY FILTERED AUDITS)
+        // CSV EXPORTER 
         function handleExportCSV() {
             if (filteredAudits.length === 0) {
                 showToast("ไม่มีข้อมูลภายใต้เงื่อนไขตัวกรองนี้ให้ออกรายงาน", "error");
