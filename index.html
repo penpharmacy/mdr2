@@ -28,10 +28,8 @@
   <header class="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg sticky top-0 z-40">
     <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-3">
-        <!-- Medical Shield Icon -->
-        <svg class="w-8 h-8 text-purple-100" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-        </svg>
+        <!-- New Logo (Uploaded Germ Image) -->
+        <img src="image_4ec7a2.jpg" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3209/3209255.png'" alt="MDR Logo" class="w-11 h-11 object-cover rounded-full bg-white border-2 border-purple-200 shadow-sm p-0.5">
         <div>
           <h1 class="text-lg md:text-xl font-bold tracking-wide">MDR Check list</h1>
           <p class="text-xs text-purple-100 font-light">รพ.พุนพิน สุราษฎร์ธานี</p>
@@ -293,22 +291,43 @@
       </div>
 
       <!-- MAIN CHARTS ROW -->
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-        <div class="pb-3 mb-4 border-b border-slate-100 flex justify-between items-center">
-          <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
-            <span>เปรียบเทียบ ปฏิบัติ/ไม่ปฏิบัติ รายข้อ (%)</span>
-          </h3>
-          <span class="text-[10px] bg-slate-100 px-2.5 py-1 rounded-full font-bold text-slate-500">เกณฑ์ 16 ข้อ</span>
-        </div>
-        <!-- Adjusted height for 16 items -->
-        <div class="relative min-h-[450px] w-full flex items-center justify-center">
-          <canvas id="comparisonChartCanvas"></canvas>
-          <div id="chart1EmptyState" class="absolute inset-0 bg-white flex flex-col items-center justify-center text-slate-400 space-y-2 hidden">
-            <i data-lucide="bar-chart-2" class="w-12 h-12 text-slate-300"></i>
-            <p class="text-xs font-semibold">ไม่พบข้อมูลประเมินตามตัวกรองช่วงเวลาดังกล่าว</p>
+      <div class="grid grid-cols-1 gap-6">
+        
+        <!-- Chart 1: Comparison Bar Chart -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+          <div class="pb-3 mb-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
+              <span>เปรียบเทียบ ปฏิบัติ/ไม่ปฏิบัติ รายข้อ (%)</span>
+            </h3>
+            <span class="text-[10px] bg-slate-100 px-2.5 py-1 rounded-full font-bold text-slate-500">เกณฑ์ 16 ข้อ</span>
+          </div>
+          <div class="relative min-h-[450px] w-full flex items-center justify-center">
+            <canvas id="comparisonChartCanvas"></canvas>
+            <div id="chart1EmptyState" class="absolute inset-0 bg-white flex flex-col items-center justify-center text-slate-400 space-y-2 hidden">
+              <i data-lucide="bar-chart-2" class="w-12 h-12 text-slate-300"></i>
+              <p class="text-xs font-semibold">ไม่พบข้อมูลประเมินตามตัวกรองช่วงเวลาดังกล่าว</p>
+            </div>
           </div>
         </div>
+
+        <!-- Chart 2: Top Non-Compliance (Changed to HTML List for readability) -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+          <div class="pb-3 mb-4 border-b border-slate-100 flex justify-between items-center">
+            <h3 class="font-bold text-slate-800 text-sm md:text-base flex items-center space-x-2">
+              <i data-lucide="trending-down" class="w-5 h-5 text-rose-500"></i>
+              <span>สรุปหัวข้อที่ "ไม่ปฏิบัติ" (เรียงจากมากไปน้อย)</span>
+            </h3>
+          </div>
+          <div id="nonComplianceListContainer" class="space-y-4 w-full">
+            <!-- Dynamic list goes here -->
+          </div>
+          <div id="chart2EmptyState" class="bg-emerald-50/50 rounded-xl p-8 flex flex-col items-center justify-center text-emerald-600 space-y-2 hidden border border-emerald-100 mt-2">
+            <i data-lucide="check-circle" class="w-12 h-12 text-emerald-400"></i>
+            <p class="text-sm font-bold mt-2">ยอดเยี่ยม! ไม่มีหัวข้อที่ไม่ปฏิบัติในช่วงเวลานี้</p>
+          </div>
+        </div>
+
       </div>
 
       <!-- Compliance by Item Detailed Breakdown -->
@@ -918,10 +937,17 @@
         document.getElementById('repFullCompliancePct').innerText = "0% (0/0) ของทั้งหมด";
         document.getElementById('repCriticalImprovement').innerText = "ไม่มีข้อมูล";
         document.getElementById('itemBreakdownContainer').innerHTML = `<div class="text-center py-6 text-slate-400 text-sm">ไม่พบข้อมูลสถิติตามเงื่อนไขที่เลือก</div>`;
+        
         document.getElementById('chart1EmptyState').classList.remove('hidden');
         if(comparisonChartInstance) comparisonChartInstance.destroy();
+        
+        document.getElementById('chart2EmptyState').classList.remove('hidden');
+        const listContainer = document.getElementById('nonComplianceListContainer');
+        if(listContainer) listContainer.innerHTML = '';
+
         return;
       }
+      
       document.getElementById('chart1EmptyState').classList.add('hidden');
 
       let fullC = 0;
@@ -941,6 +967,9 @@
 
       let lowestRate = 101, lowestText = "-";
       let html = "", lbls=[], dYes=[], dNo=[], fYes=[], fNo=[];
+      
+      let ncDataArr = []; // Array for non-compliance chart data
+      const tempDiv = document.createElement("div");
 
       for(let i=1; i<=TOTAL_ITEMS; i++) {
         const totalEval = stats[i].yes + stats[i].no;
@@ -955,11 +984,32 @@
 
         if(totalEval > 0 && pYes < lowestRate) { lowestRate = pYes; lowestText = `ข้อ ${i}`; }
 
+        // Strip HTML from text for chart labels to prevent rendering issues
+        tempDiv.innerHTML = stats[i].text;
+        const cleanText = tempDiv.textContent || tempDiv.innerText || "";
+
+        // Collect non-compliance data
+        if (stats[i].no > 0) {
+           ncDataArr.push({
+              item: i,
+              label: [`ข้อ ${i}`, cleanText.substring(0, 35) + (cleanText.length > 35 ? '...' : '')],
+              fullText: cleanText,
+              noCount: stats[i].no,
+              totalEval: totalEval,
+              pct: pNo
+           });
+        }
+
         html += `
           <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <div class="flex justify-between items-center text-xs mb-1">
-              <span class="font-semibold text-slate-800 line-clamp-1 w-3/4" title="ข้อ ${i}">${i}. ข้อที่ ${i}</span>
-              <span class="font-bold text-purple-700">${pYes}% (${stats[i].yes}/${totalEval})</span>
+            <div class="flex flex-col items-start text-xs mb-2 gap-2">
+              <div class="font-semibold text-slate-800 leading-relaxed w-full">
+                <span class="text-purple-600 font-bold mr-1">ข้อ ${i}.</span>${stats[i].text}
+              </div>
+              <div class="w-full flex justify-between">
+                <div class="font-bold text-emerald-600 text-[11px] whitespace-nowrap">ปฏิบัติ: ${pYes}% (${stats[i].yes}/${totalEval})</div>
+                <div class="font-bold text-rose-500 text-[11px] whitespace-nowrap">ไม่ปฏิบัติ: ${pNo}% (${stats[i].no}/${totalEval})</div>
+              </div>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-2 flex overflow-hidden">
               <div class="bg-purple-500 h-full" style="width: ${pYes}%"></div>
@@ -971,11 +1021,11 @@
       document.getElementById('repCriticalImprovement').innerText = lowestRate <= 100 ? `${lowestText} (${lowestRate}%)` : "สมบูรณ์ทุกข้อ";
       document.getElementById('itemBreakdownContainer').innerHTML = html;
 
-      // Render Chart
-      const ctx = document.getElementById('comparisonChartCanvas').getContext('2d');
+      // Render Chart 1: Comparison Bar Chart
+      const ctx1 = document.getElementById('comparisonChartCanvas').getContext('2d');
       if(comparisonChartInstance) comparisonChartInstance.destroy();
       
-      comparisonChartInstance = new Chart(ctx, {
+      comparisonChartInstance = new Chart(ctx1, {
         type: 'bar',
         plugins: [ChartDataLabels],
         data: {
@@ -1006,6 +1056,45 @@
           }
         }
       });
+
+      // Render Chart 2: Top Non-Compliance (HTML List format for better readability)
+      const listContainer = document.getElementById('nonComplianceListContainer');
+      const emptyState2 = document.getElementById('chart2EmptyState');
+      
+      if (ncDataArr.length === 0) {
+          listContainer.innerHTML = '';
+          emptyState2.classList.remove('hidden');
+      } else {
+          emptyState2.classList.add('hidden');
+
+          // Sort descending by percentage (pct) of non-compliance, then by count
+          ncDataArr.sort((a, b) => b.pct - a.pct || b.noCount - a.noCount || a.item - b.item);
+
+          let listHtml = '';
+          ncDataArr.forEach((d, index) => {
+              const rank = index + 1;
+              listHtml += `
+                <div class="flex flex-col space-y-3 bg-rose-50/30 p-4 rounded-xl border border-rose-100 hover:bg-rose-50 transition-colors shadow-sm">
+                  <div class="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
+                    <div class="flex items-start gap-3 w-full">
+                       <div class="w-7 h-7 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 shadow-sm">${rank}</div>
+                       <div class="text-sm font-medium text-slate-700 leading-relaxed w-full">
+                         <span class="font-bold text-rose-600 mr-1">ข้อ ${d.item}.</span> ${d.fullText}
+                       </div>
+                    </div>
+                    <div class="text-right shrink-0 bg-white px-3 py-1.5 rounded-lg border border-rose-100 shadow-sm sm:min-w-[100px] w-full sm:w-auto flex flex-row sm:flex-col justify-between items-center sm:items-end">
+                       <div class="text-rose-600 font-bold text-sm sm:text-base">${d.noCount} ครั้ง</div>
+                       <div class="text-xs font-semibold text-slate-500 whitespace-nowrap">${d.pct}% (${d.noCount}/${d.totalEval})</div>
+                    </div>
+                  </div>
+                  <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden flex sm:ml-10" style="width: 100%; max-width: calc(100% - 2.5rem);">
+                     <div class="bg-rose-500 h-full rounded-full transition-all duration-500" style="width: ${d.pct}%"></div>
+                  </div>
+                </div>
+              `;
+          });
+          listContainer.innerHTML = listHtml;
+      }
     }
   </script>
 </body>
