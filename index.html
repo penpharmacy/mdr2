@@ -432,9 +432,11 @@
     const defaultItems = {};
     for(let i=1; i<=TOTAL_ITEMS; i++) defaultItems[i] = null;
 
+    const GLOBAL_DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbxgTzi3myvmk0MAhA-et7xDoAMf_kr5ATEr0xnq0vLT9m778Wx1xBakmELTwTlqtowtDA/exec";
+
     let db = {
       records: JSON.parse(localStorage.getItem('mdro_records')) || [],
-      apiUrl: localStorage.getItem('mdro_api_url') || ""
+      apiUrl: localStorage.getItem('mdro_api_url') || GLOBAL_DEFAULT_API_URL
     };
 
     let comparisonChartInstance = null;
